@@ -28,7 +28,9 @@ authController.register = async (req, res) => {
                     if (err) {
                         //catch unexpected error
                         return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-                            error: err
+                            error: true,
+                            type: "danger",
+                            message: err
                         });
                     } else {
                         //save the user info
@@ -74,7 +76,7 @@ authController.googleLogin = (req, res) => {
                         //catch unexpected error
                         return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
                             error: true,
-                            type: "error",
+                            type: "danger",
                             message: err
                         });
                     } else {
@@ -109,7 +111,7 @@ authController.googleLogin = (req, res) => {
                                     //catch unexpected error 
                                     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
                                         error: true,
-                                        type: "error",
+                                        type: "danger",
                                         message: err
                                     });
                                 } else {
@@ -160,15 +162,15 @@ authController.login = async (req, res,) => {
             if (user.length < 1) {
                 return res.status(httpStatus.UNAUTHORIZED).json({
                     error: true,
-                    type: "error",
-                    message: "Auth failed. Account does not exist."
+                    type: "warning",
+                    message: "Login Failed. Account does not exist."
                 });
             }
             bcrypt.compare(req.body.password, user[0].password, (err, result) => {
                 if (err) {
                     return res.status(httpStatus.UNAUTHORIZED).json({
                         error: true,
-                        type: "error",
+                        type: "danger",
                         message: "Auth failed. Unauthorized."
                     });
                 }
@@ -194,7 +196,7 @@ authController.login = async (req, res,) => {
                 }
                 res.status(httpStatus.UNAUTHORIZED).json({
                     error: true,
-                    type: "error",
+                    type: "warning",
                     message: "Login Failed. Incorrect Email or Password"
                 });
             });
