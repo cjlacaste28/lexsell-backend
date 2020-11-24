@@ -159,12 +159,16 @@ authController.login = async (req, res,) => {
         .then((user) => {
             if (user.length < 1) {
                 return res.status(httpStatus.UNAUTHORIZED).json({
+                    error: true,
+                    type: "error",
                     message: "Auth failed. Account does not exist."
                 });
             }
             bcrypt.compare(req.body.password, user[0].password, (err, result) => {
                 if (err) {
                     return res.status(httpStatus.UNAUTHORIZED).json({
+                        error: true,
+                        type: "error",
                         message: "Auth failed. Unauthorized."
                     });
                 }
