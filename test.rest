@@ -1,0 +1,28 @@
+http://localhost:5000/api/auth
+
+###
+
+# REGISTER
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+    "firstName": "wew",
+    "lastName": "Agent",
+    "email": "test423@gmail.com",
+    "gender": "",
+    "country": "",
+    "region": "",
+    "password": "password"
+}
+
+###
+
+# LOGIN
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test423@gmail.com",
+    "password": "password"
+}
