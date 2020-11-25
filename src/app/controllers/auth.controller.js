@@ -2,8 +2,13 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import mailgun from 'mailgun-js'
 import httpStatus from "../utils/httpStatus"
 import userModel from "../models/user.model";
+
+//mailgun
+const DOMAIN = 'sandboxda7632591200466ca1af32aa15ba4344.mailgun.org';
+const mg = mailgun({ apiKey: process.env.MAILGUN_APIKEY, domain: DOMAIN });
 
 //google client id to OAuth2Client
 const client = new OAuth2Client("999962597242-3rbqhpsghmjo9bk3ouihcdr6u3ddqegq.apps.googleusercontent.com");
@@ -23,6 +28,19 @@ authController.register = async (req, res) => {
                     message: "Email already registered."
                 });
             } else {
+
+                /******* mailgun initial setup */
+                // const data = {
+                //     from: 'Excited User <me@samples.mailgun.org>',
+                //     to: 'bar@example.com, YOU@YOUR_DOMAIN_NAME',
+                //     subject: 'Hello',
+                //     text: 'Testing some Mailgun awesomness!'
+                // };
+                // mg.messages().send(data, function (error, body) {
+                //     console.log(body);
+                // });
+
+
                 //password encrypt 10 rounds
                 bcrypt.hash(req.body.password, 10, async (err, hash) => {
                     if (err) {
