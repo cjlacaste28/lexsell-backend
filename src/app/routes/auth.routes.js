@@ -15,4 +15,6 @@ authRoutes.post("/login", asyncWrapper(authController.login));
 // Google Login
 authRoutes.post("/googleLogin", asyncWrapper(authController.googleLogin));
 
+authRoutes.post("/verify/:email"), asyncWrapper(authController.verify)
+
 export default authRoutes;

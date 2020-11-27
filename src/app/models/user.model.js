@@ -18,6 +18,8 @@ const userSchema = new schema({
     gender: String,
     country: String,
     region: String,
+    secretToken: String,
+    isActive: Boolean,
     password: {
         type: String,
         required: true

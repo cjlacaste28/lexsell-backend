@@ -2,13 +2,14 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
-import mailgun from 'mailgun-js'
+import randomstring from 'randomstring';
 import httpStatus from "../utils/httpStatus"
 import userModel from "../models/user.model";
+import { transformAuthInfo } from 'passport';
 
 //mailgun
-const DOMAIN = 'sandboxda7632591200466ca1af32aa15ba4344.mailgun.org';
-const mg = mailgun({ apiKey: process.env.MAILGUN_APIKEY, domain: DOMAIN });
+//const DOMAIN = 'sandboxda7632591200466ca1af32aa15ba4344.mailgun.org';
+//const mg = mailgun({ apiKey: process.env.MAILGUN_APIKEY, domain: process.env.DOMAIN });
 
 //google client id to OAuth2Client
 const client = new OAuth2Client("999962597242-3rbqhpsghmjo9bk3ouihcdr6u3ddqegq.apps.googleusercontent.com");
@@ -29,18 +30,6 @@ authController.register = async (req, res) => {
                 });
             } else {
 
-                /******* mailgun initial setup */
-                // const data = {
-                //     from: 'Excited User <me@samples.mailgun.org>',
-                //     to: 'bar@example.com, YOU@YOUR_DOMAIN_NAME',
-                //     subject: 'Hello',
-                //     text: 'Testing some Mailgun awesomness!'
-                // };
-                // mg.messages().send(data, function (error, body) {
-                //     console.log(body);
-                // });
-
-
                 //password encrypt 10 rounds
                 bcrypt.hash(req.body.password, 10, async (err, hash) => {
                     if (err) {
@@ -51,22 +40,46 @@ authController.register = async (req, res) => {
                             message: err
                         });
                     } else {
+
+                        //generate verification code
+                        const secretToken = randomstring.generate({
+                            length: 6,
+                            charset: 'alphanumeric',
+                            capitalization: 'uppercase'
+                        });
+
+                        /******* mailgun initial setup */
+                        // const data = {
+                        //     from: 'LexSell <noreply@christianlacaste.me>',
+                        //     to: `${req.body.email}`,
+                        //     subject: 'Welcome To LexSell',
+                        //     text: 'Testing some Mailgun awesomness!'
+
+                        // };
+                        // console.log(data);
+                        // mg.messages().send(data, function (error, body) {
+                        //     console.log(body);
+                        // });
+
                         //save the user info
                         const newUser = await userModel.create({
                             firstName: req.body.firstName,
                             lastName: req.body.lastName,
                             email: req.body.email,
+                            secretToken: secretToken,
+                            isActive: false,
                             gender: req.body.gender,
                             country: req.body.country,
                             region: req.body.region,
-                            password: hash,
+                            password: hash
                         });
-                        let { password, __v, ...user } = newUser.toObject();
+                        //let { password, __v, ...user } = newUser.toObject();
                         //return success confirmation
                         return res.status(httpStatus.CREATED).json({
                             error: false,
                             type: "success",
-                            info: { user }
+                            message: "Registration Success! Please verify your email."
+                            //info: { user }
                         });
                     }
                 });
@@ -139,6 +152,7 @@ authController.googleLogin = (req, res) => {
                                         lastName: family_name,
                                         email: email,
                                         password: hash,
+                                        isActive: true
                                     });
 
                                     ///store newUser details to token
@@ -186,14 +200,24 @@ authController.login = async (req, res,) => {
             }
             bcrypt.compare(req.body.password, user[0].password, (err, result) => {
                 if (err) {
-                    return res.status(httpStatus.UNAUTHORIZED).json({
+                    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
                         error: true,
                         type: "danger",
-                        message: "Auth failed. Unauthorized."
+                        message: "Something went wrong. Try again later."
                     });
                 }
                 if (result) {
-                    //--embed the additional fields ex. Role
+
+                    //Execute if account is not verified / active
+                    if (!user[0].isActive) {
+                        return res.status(httpStatus.UNAUTHORIZED).json({
+                            error: true,
+                            type: "warning",
+                            message: "Please verify your email."
+                        });
+                    }
+
+                    //Execute if account is verified / active
                     const token = jwt.sign(
                         {
                             email: user[0].email,
@@ -211,19 +235,25 @@ authController.login = async (req, res,) => {
                         message: "Sucessfully Logged In",
                         token: token,
                     });
+                } else {
+                    //Execute if incorrect password
+                    res.status(httpStatus.UNAUTHORIZED).json({
+                        error: true,
+                        type: "warning",
+                        message: "Login Failed. Incorrect Password"
+                    });
                 }
-                res.status(httpStatus.UNAUTHORIZED).json({
-                    error: true,
-                    type: "warning",
-                    message: "Login Failed. Incorrect Email or Password"
-                });
             });
         })
         .catch(err => {
             res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-                error: err
+                error: true,
+                type: "danger",
+                message: err
             });
         });
 }
+
+authController.verifyIdToken = () => { }
 
 export default authController;
