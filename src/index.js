@@ -8,9 +8,12 @@ import apiRoutes from './app/routes/';
 
 const app = express();
 
-//create corsOptions when hosted online
-app.use(cors());
+//only client url in .env can have the access.
+app.use(cors({
+    origin: process.env.CLIENT_URL
+}));
 
+//use bodyParser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

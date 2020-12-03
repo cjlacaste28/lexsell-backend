@@ -1,6 +1,12 @@
 import express from "express";
 import authController from "../controllers/auth.controller"
 import { asyncWrapper } from "../utils/asyncWrapper";
+import {
+    validRegister,
+    validLogin,
+    forgotPasswordValidator,
+    resetPasswordValidator
+} from "../middlewares/validation";
 
 const authRoutes = express.Router();
 
@@ -9,12 +15,18 @@ authRoutes.get("/", function (req, res, next) {
 });
 
 // Create
-authRoutes.post("/register", asyncWrapper(authController.register));
+authRoutes.post("/register", validRegister, asyncWrapper(authController.register));
+// Activation
+authRoutes.post('/activation', asyncWrapper(authController.activation));
 // Login
-authRoutes.post("/login", asyncWrapper(authController.login));
-// Google Login
-authRoutes.post("/googleLogin", asyncWrapper(authController.googleLogin));
+authRoutes.post("/login", validLogin, asyncWrapper(authController.login));
+// Forgot Reset password
+authRoutes.put('/forgotpassword', forgotPasswordValidator, asyncWrapper(authController.forgotPassword));
+authRoutes.put('/resetpassword', resetPasswordValidator, asyncWrapper(authController.resetPassword));
 
-authRoutes.post("/verify/:email"), asyncWrapper(authController.verify)
+
+// Google Login
+authRoutes.post("/googlelogin", asyncWrapper(authController.googleLogin));
+
 
 export default authRoutes;
