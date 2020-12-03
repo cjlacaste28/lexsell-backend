@@ -24,6 +24,7 @@ authController.register = (req, res) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
+        // Catch unexpected error
         const firstError = errors.array().map(error => error.msg)[0];
         return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({
             success: false,
@@ -31,6 +32,7 @@ authController.register = (req, res) => {
             message: firstError
         });
     } else {
+        // Checks if email exist
         userModel.findOne({ email }).exec((err, user) => {
             if (user) {
                 return res.status(httpStatus.BAD_REQUEST).json({
@@ -147,9 +149,11 @@ authController.activation = (req, res) => {
 
 // LOGIN
 authController.login = (req, res,) => {
+    // Deconstruct data from client form
     const { email, password } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        // Catch unexpected error
         const firstError = errors.array().map(error => error.msg)[0];
         return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({
             success: false,
@@ -185,8 +189,10 @@ authController.login = (req, res,) => {
                 }
             );
 
+            // Deconstruct user data
             const { _id, firstName, lastName, email, role, gender, country, region } = user;
 
+            // Login Success
             return res.json({
                 success: true,
                 type: "sucess",
@@ -202,10 +208,12 @@ authController.login = (req, res,) => {
 
 // FORGOT PASSWORD
 authController.forgotPassword = (req, res) => {
+    // Deconstruct email from client form
     const { email } = req.body;
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
+        // Catch unexpected error
         const firstError = errors.array().map(error => error.msg)[0];
         return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({
             success: false,
@@ -284,11 +292,13 @@ authController.forgotPassword = (req, res) => {
 // RESET PASSWORD
 authController.resetPassword = (req, res) => {
 
+    // Deconstruct reset link and new password
     const { resetPasswordLink, newPassword } = req.body;
 
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
+        // Catch unexpected error
         const firstError = errors.array().map(error => error.msg)[0];
         return res.status(httpStatus.UNPROCESSABLE_ENTITY).json({
             success: false,
@@ -303,6 +313,7 @@ authController.resetPassword = (req, res) => {
                 decoded
             ) {
                 if (err) {
+                    // Reset link token is expired
                     return res.status(httpStatus.BAD_REQUEST).json({
                         success: false,
                         type: "danger",
@@ -313,6 +324,7 @@ authController.resetPassword = (req, res) => {
                 // Find account with same reset password link
                 userModel.findOne({ resetPasswordLink }, (err, user) => {
                     if (err || !user) {
+                        // Catch unexpected error.
                         return res.status(httpStatus.BAD_REQUEST).json({
                             success: false,
                             type: "danger",
@@ -423,104 +435,5 @@ authController.googleLogin = async (req, res) => {
             }
         });
 };
-
-
-/*
-authController.googleLogin = (req, res) => {
-  
-       //gets the tokenId from req
-       const { tokenId } = req.body;
-   
-       //compares the tokenId if valid 
-       client.verifyIdToken({ idToken: tokenId, audience: process.env.GOOGLE_CLIENT })
-           .then((response) => {
-   
-               //deconstruct the google response payload details
-               const { email_verified, given_name, family_name, email } = response.payload;
-   
-               if (email_verified) {
-   
-                   //checks if google account was already registered
-                   userModel.findOne({ email }).exec((err, userInfo) => {
-                       if (err) {
-                           //catch unexpected error
-                           return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-                               error: true,
-                               type: "danger",
-                               message: err
-                           });
-                       } else {
-                           if (userInfo) {
-                               //store existing google account details to token? :) 
-                               const token = jwt.sign(
-                                   {
-                                       firstName: userInfo.firstName,
-                                       lastName: userInfo.lastName,
-                                       role: userInfo.role,
-                                       email: userInfo.email,
-                                       userId: userInfo.id,
-                                       firstName: userInfo.firstName,
-                                       lastName: userInfo.lastName
-                                   },
-                                   process.env.JWT_SECRET,
-                                   {
-                                       expiresIn: process.env.JWT_EXPIRATION
-                                   }
-                               );
-                               //response login confirmation    
-                               return res.status(httpStatus.OK).json({
-                                   error: false,
-                                   type: "success",
-                                   message: "Sucessfully Logged In",
-                                   user: { userId, email, firstName, lastName, role },
-                                   token: token
-                               });
-                           } else {
-                               //goes here if google account is not registered.
-   
-                               //create generated password using the email and secret key
-                               let pw = email + process.env.JWT_SECRET;
-                               user = new userModel({ firstName, lastName, email, password });
-   
-                               //store the details of current google account login.
-                               const newUser = userModel.create({
-                                   firstName: given_name,
-                                   lastName: family_name,
-                                   email: email,
-                                   password: pw
-                               });
-   
-                               ///store newUser details to token
-                               const token = jwt.sign(
-                                   {
-                                       email: newUser.email,
-                                       userId: newUser.id,
-                                       role: newUser.role
-                                   },
-                                   process.env.JWT_SECRET,
-                                   {
-                                       expiresIn: process.env.JWT_EXPIRATION
-                                   }
-                               );
-                               let { password, __v, ...user } = newUser.toObject();
-                               // -- Dev Note: Check kung pwede access yung info using token
-                               //response login confirmation  
-                               return res.status(httpStatus.CREATED).json({
-                                   error: false,
-                                   type: "success",
-                                   message: "Sucessfully Logged In",
-                                   token: token
-   
-                               });
-                           }
-   
-   
-                       }
-                   })
-               }
-           })
-           
-}*/
-
 
 export default authController;
